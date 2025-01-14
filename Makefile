@@ -6,9 +6,9 @@ CXXFLAGS = -I/Users/alakanandabg/googletest/include -std=c++11 -pthread
 
 # Paths for Google Test
 GTEST_DIR = /usr/local
-GTEST_LIB = $(GTEST_DIR)/lib/libgtest.a
+GTEST_LIB = /opt/homebrew/Cellar/googletest/1.15.2/lib
 GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
-GTEST_INCLUDE = $(GTEST_DIR)/include
+GTEST_INCLUDE = /opt/homebrew/Cellar/googletest/1.15.2/include
 
 # Source and object files
 SRC = src/main.c src/sensor.c
