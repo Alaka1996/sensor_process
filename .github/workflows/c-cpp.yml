@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: C Program CI
 
 on:
   push:
@@ -9,44 +9,41 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Checkout code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up CMake
-      uses: cmake/setup-cmake@v3  # Correct action for CMake setup
+    # Step 2: Install dependencies
+    - name: Install GCC and Make
+      run: sudo apt-get update && sudo apt-get install -y build-essential
 
-    - name: Set up GCC
-      uses: gcc-actions/setup-gcc@v2  # Correct action for GCC setup
+    # Step 3: Install cppcheck
+    - name: Install cppcheck
+      run: sudo apt-get install -y cppcheck
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential cppcheck
+    # Step 4: Run cppcheck and save results
+    - name: Static Code Analysis with cppcheck
+      run: cppcheck --enable=all --inconclusive --std=c99 src/ --xml 2> cppcheck-results.xml
 
-    - name: Build the project
-      run: |
-        mkdir -p build
-        cd build
-        cmake ..
-        make
-
-    - name: Run tests
-      run: |
-        cd build
-        ./test  # Assuming your test executable is named `test`
-
-    - name: Static analysis with cppcheck
-      run: cppcheck --enable=all --inconclusive --std=c99 src
-
-    - name: Upload Artifacts
+    # Step 5: Upload cppcheck results as an artifact
+    - name: Upload cppcheck results
       uses: actions/upload-artifact@v3
       with:
-        name: build
-        path: build/
+        name: cppcheck-results
+        path: cppcheck-results.xml
 
-    - name: Clean up
+    # Step 6: Build the program
+    - name: Build program
+      run: make
+
+    # Step 7: Run the program
+    - name: Run program
+      run: ./sensor_program
+
+    # Step 8: Clean build
+    - name: Clean build
       run: make clean
