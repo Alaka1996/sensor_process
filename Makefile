@@ -2,19 +2,21 @@
 CC = gcc
 CXX = g++
 CFLAGS = -Wall -Wextra -g -std=c99
-CXXFLAGS = -I/opt/homebrew/Cellar/googletest/1.15.2/include -std=c++11 -pthread
+CXXFLAGS = -I./include -pthread
 
 # Paths for Google Test
+GTEST_DIR = /usr/local
 GTEST_LIB = /opt/homebrew/Cellar/googletest/1.15.2/lib
+GTEST_MAIN_LIB = $(GTEST_LIB)/libgtest_main.a
 GTEST_INCLUDE = /opt/homebrew/Cellar/googletest/1.15.2/include
 
 # Source and object files
-SRC = src/main.c src/sensor.c
-OBJ = $(SRC:.c=.o)
+SRC = src/main.c src/sensor.c src/utils.c src/processing.c
+OBJ = $(SRC:src/%.c=build/src/%.o)
 EXE = my_program
 
 # Directories
-BUILD_DIR = build
+BUILD_DIR = build/src
 
 # Targets
 all: $(EXE)
