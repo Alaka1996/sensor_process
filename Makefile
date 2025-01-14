@@ -1,40 +1,38 @@
-# Compiler and flags
+# Compiler settings
 CC = gcc
-CFLAGS = -Iinclude -Wall -Wextra -std=c99
+CXX = g++
+CFLAGS = -Wall -Wextra -g -std=c99
+CXXFLAGS = -Wall -Wextra -g -std=c++17
 
-# Google Test settings
-GTEST_DIR = /usr/src/gtest
-GTEST_LIB = /usr/lib/libgtest.a
-GTEST_MAIN = /usr/lib/libgtest_main.a
+# Paths for Google Test
+GTEST_DIR = /usr/local
+GTEST_LIB = $(GTEST_DIR)/lib/libgtest.a
+GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
+GTEST_INCLUDE = $(GTEST_DIR)/include
 
-# Source files and object files
-SRC = src/main.c src/sensor.c src/processing.c src/utils.c
+# Source and object files
+SRC = src/main.c src/sensor.c
 OBJ = $(SRC:.c=.o)
-TARGET = sensor_program
+EXE = my_program
 
-# Test files and object files
-TEST_SRC = tests/test_main.c tests/test_sensor.c
-TEST_OBJ = $(TEST_SRC:.c=.o)
-TEST_TARGET = test_program
+# Directories
+BUILD_DIR = build
 
-# Default target
-all: $(TARGET)
+# Targets
+all: $(EXE)
 
-# Build the program
-$(TARGET): $(OBJ)
-	$(CC) -o $@ $^
+$(EXE): $(OBJ)
+	$(CXX) $(OBJ) -o $(EXE) $(GTEST_LIB) $(GTEST_MAIN_LIB) -lpthread
 
-# Build and run tests
-$(TEST_TARGET): $(TEST_OBJ) $(GTEST_LIB) $(GTEST_MAIN)
-	$(CC) $(CFLAGS) -o $@ $^ -lgtest -lgtest_main -pthread
+$(OBJ): $(SRC)
+	$(CC) $(CFLAGS) -I$(GTEST_INCLUDE) -c $(SRC) -o $(BUILD_DIR)/$@
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Run cppcheck for static code analysis
+# Running cppcheck for static analysis
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c99 $(SRC)
+	cppcheck --enable=all --inconclusive --quiet src/
 
 # Clean up build files
 clean:
-	rm -f $(OBJ) $(TARGET) $(TEST_OBJ) $(TEST_TARGET)
+	rm -rf $(BUILD_DIR)/*.o $(EXE)
+
+.PHONY: all clean cppcheck
