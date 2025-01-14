@@ -55,10 +55,19 @@ clean:
 
 # Run Cppcheck
 lint:
-	cppcheck --force --enable=all --inconclusive --std=c++17 -Iinclude -I/usr/include --suppress=missingIncludeSystem --suppress=syntaxError src/*.c
+	cppcheck --force --enable=all --inconclusive --std=c++17 -Iinclude -I/usr/include --suppress=missingIncludeSystem --suppress=syntaxError src/*
 
 # Run the tests (Google Test)
 test: $(BIN_DIR)/test_sensor
 	$(BIN_DIR)/test_sensor
+
+# Debug target
+debug:
+	@echo "SRC: $(SRC)"
+	@echo "OBJ: $(OBJ)"
+	@echo "MAIN_OBJ: $(MAIN_OBJ)"
+	@echo "UTILS_OBJ: $(UTILS_OBJ)"
+	@echo "SENSOR_OBJ: $(SENSOR_OBJ)"
+	@echo "TEST_OBJ: $(TEST_OBJ)"
 
 .PHONY: all dirs clean lint debug test
