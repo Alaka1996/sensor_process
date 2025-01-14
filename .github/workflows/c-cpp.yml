@@ -18,6 +18,10 @@ jobs:
       with:
         submodules: true  # Ensure submodules are cloned
 
+    - name: Initialize and update submodules
+      run: |
+        git submodule update --init --recursive  # Initialize submodules
+
     - name: Set up build environment
       run: |
         sudo apt-get update
