@@ -2,7 +2,7 @@
 CC = gcc
 CXX = g++
 CFLAGS = -Wall -Wextra -g -std=c99
-CXXFLAGS = -Wall -Wextra -g -std=c++17
+CXXFLAGS = -I/Users/alakanandabg/googletest/include -std=c++11 -pthread
 
 # Paths for Google Test
 GTEST_DIR = /usr/local
