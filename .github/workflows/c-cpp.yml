@@ -18,32 +18,31 @@ jobs:
       uses: actions/checkout@v3
 
     # Step 2: Install dependencies
-    - name: Install GCC and Make
-      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgtest-dev
+        cd /usr/src/gtest
+        sudo cmake .
+        sudo make
+        sudo cp *.a /usr/lib
 
-    # Step 3: Install cppcheck
-    - name: Install cppcheck
-      run: sudo apt-get install -y cppcheck
-
-    # Step 4: Run cppcheck and save results
+    # Step 3: Run cppcheck
     - name: Static Code Analysis with cppcheck
-      run: cppcheck --enable=all --inconclusive --std=c99 src/ --xml 2> cppcheck-results.xml
+      run: cppcheck --enable=all --inconclusive --std=c99 src/
 
-    # Step 5: Upload cppcheck results as an artifact
-    - name: Upload cppcheck results
-      uses: actions/upload-artifact@v3
-      with:
-        name: cppcheck-results
-        path: cppcheck-results.xml
-
-    # Step 6: Build the program
+    # Step 4: Build program
     - name: Build program
       run: make
 
-    # Step 7: Run the program
+    # Step 5: Run program
     - name: Run program
       run: ./sensor_program
 
-    # Step 8: Clean build
+    # Step 6: Build and run tests
+    - name: Build and run tests
+      run: make test
+
+    # Step 7: Clean build
     - name: Clean build
       run: make clean
