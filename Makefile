@@ -1,50 +1,62 @@
-# Compiler and Flags
+# Compiler and flags
+CC = gcc
 CXX = g++
-CXXFLAGS = -Wall -std=c++17 -I$(PWD)/external/googletest/googletest/include
-LDFLAGS = -lgtest -lgtest_main -pthread
+CFLAGS = -Wall -std=c99
+CXXFLAGS = -Wall -std=c++11
 
-# Directories
-BUILD_DIR = build
+# Paths
 GTEST_DIR = external/googletest
-GTEST_BUILD_DIR = $(GTEST_DIR)/build
+GTEST_LIB_DIR = $(GTEST_DIR)/lib
 
-# Source and Object Files
-SRC = src/main.cpp src/sensor.cpp
-OBJ = $(SRC:.cpp=.o)
+# Directories for object files and executable
+OBJ_DIR = obj
+BIN_DIR = bin
 
-# Test Files and Targets
-TEST_SRC = test/sensor_test.cpp
-TEST_OBJ = $(TEST_SRC:.cpp=.o)
-TEST_TARGET = test_program
+# Source files
+SRC = src/main.c src/sensor.c src/utils.c
+TEST_SRC = test/test_main.cpp test/test_utils.cpp
 
-# Targets
-all: $(OBJ)
-	$(CXX) -o main $(OBJ)
+# Output files
+EXEC = $(BIN_DIR)/my_program
+TEST_EXEC = $(BIN_DIR)/run_tests
 
-# Build Google Test from submodule (if not already built)
-$(GTEST_BUILD_DIR)/lib/libgtest.a:
-	mkdir -p $(GTEST_BUILD_DIR)
-	cd $(GTEST_DIR) && cmake . && make
+# Include paths
+INCLUDE_DIRS = -I include -I $(GTEST_DIR)/googletest/include
 
-# Build and link test program with Google Test
-test: $(OBJ) $(TEST_OBJ) $(GTEST_BUILD_DIR)/lib/libgtest.a
-	$(CXX) -o $(TEST_TARGET) $(TEST_OBJ) $(OBJ) $(LDFLAGS)
-	./$(TEST_TARGET)
+# GoogleTest linking
+GTEST_LIBS = -L$(GTEST_LIB_DIR) -lgtest -lgtest_main -pthread
 
-# Run static analysis using Cppcheck
-cppcheck: 
-	@echo "Running Cppcheck..."
-	@cppcheck --enable=all --inconclusive --quiet src/ test/ $(GTEST_DIR) 
+# Make sure necessary directories exist
+$(shell mkdir -p $(OBJ_DIR) $(BIN_DIR))
 
-# Compilation rules
-%.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+# Build all
+all: $(EXEC)
 
-# Clean
+# Compile the main program
+$(EXEC): $(OBJ_DIR)/main.o $(OBJ_DIR)/sensor.o $(OBJ_DIR)/utils.o
+	$(CXX) -o $@ $^ $(GTEST_LIBS)
+
+# Build test program
+$(TEST_EXEC): $(OBJ_DIR)/test_main.o $(OBJ_DIR)/test_utils.o $(GTEST_LIBS)
+	$(CXX) -o $@ $^ $(GTEST_LIBS)
+
+# Compile source files
+$(OBJ_DIR)/%.o: src/%.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: test/%.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCLUDE_DIRS) $< -o $@
+
+# Run tests
+run_tests: $(TEST_EXEC)
+	./$(TEST_EXEC)
+
+# Static code analysis using cppcheck
+cppcheck:
+	cppcheck --enable=all --inconclusive --quiet --error-exitcode=1 $(SRC) $(TEST_SRC)
+
+# Clean build files
 clean:
-	rm -f $(OBJ) $(TEST_OBJ) $(TEST_TARGET) main
-	rm -rf $(GTEST_BUILD_DIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
-# Run tests (optional)
-run_tests: test
-	./$(TEST_TARGET)
+.PHONY: all clean cppcheck run_tests
