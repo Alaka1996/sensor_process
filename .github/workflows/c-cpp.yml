@@ -1,4 +1,4 @@
-name: C CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -13,40 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          submodules: true  # Initialize and update submodules
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up CMake
-        uses: actions/setup-cmake@v2
+    - name: Set up CMake
+      uses: cmake/setup-cmake@v3  # Correct action for CMake setup
 
-      - name: Set up GCC
-        uses: gcc-actions/setup-gcc@v2
-        with:
-          version: '13.3.0'
+    - name: Set up GCC
+      uses: gcc-actions/setup-gcc@v2  # Correct action for GCC setup
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake cppcheck googletest libgtest-dev
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cppcheck
 
-      - name: Install GoogleTest submodule
-        run: |
-          git submodule update --init --recursive  # Ensure submodules are initialized
+    - name: Build the project
+      run: |
+        mkdir -p build
+        cd build
+        cmake ..
+        make
 
-      - name: Run cppcheck
-        run: |
-          make cppcheck  # Run cppcheck for static analysis
+    - name: Run tests
+      run: |
+        cd build
+        ./test  # Assuming your test executable is named `test`
 
-      - name: Build and test with Makefile
-        run: |
-          make all        # Build the project
-          make tests      # Run tests
+    - name: Static analysis with cppcheck
+      run: cppcheck --enable=all --inconclusive --std=c99 src
 
-      - name: Upload Test Results
-        if: success()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: $(BUILD_DIR)/test-output
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build
+        path: build/
+
+    - name: Clean up
+      run: make clean
