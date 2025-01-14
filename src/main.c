@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "sensor.h"
 #include "processing.h"
 #include "utils.h"
