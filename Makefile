@@ -21,13 +21,19 @@ all: $(TARGET)
 $(TARGET): $(OBJ)
 	$(CC) -o $@ $^
 
+# Compile source files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile test files
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Build and run tests
+# Run cppcheck for static analysis
+cppcheck:
+	cppcheck --enable=all --inconclusive --std=c99 $(SRC)
+
+# Build and run tests with Google Test
 test: $(OBJ) $(TEST_OBJ)
 	$(CXX) -o $(TEST_TARGET) $^ -lgtest -lgtest_main -pthread
 	./$(TEST_TARGET)
@@ -35,3 +41,4 @@ test: $(OBJ) $(TEST_OBJ)
 # Clean up build files
 clean:
 	rm -f $(OBJ) $(TARGET) $(TEST_OBJ) $(TEST_TARGET)
+
