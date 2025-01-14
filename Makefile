@@ -1,58 +1,26 @@
-# Define variables
+# Compiler and flags
 CC = gcc
-CXX = g++
-CFLAGS = -Wall -Wextra -g -std=c99
-CXXFLAGS = -Wall -Wextra -g
-GTEST_DIR = external/googletest
-GTEST_LIB = $(GTEST_DIR)/build/lib/libgtest.a
-BUILD_DIR = build
-SRC_DIR = src
-TEST_DIR = test
-INCLUDE_DIR = include
-CPP_CHECK = cppcheck
+CFLAGS = -Iinclude -Wall -Wextra -std=c99
 
-# Define source files and target executable
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
-OBJ_FILES = $(SRC_FILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-TEST_SRC_FILES = $(wildcard $(TEST_DIR)/*.cpp)
-TEST_OBJ_FILES = $(TEST_SRC_FILES:$(TEST_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-TARGET = $(BUILD_DIR)/main
-TEST_TARGET = $(BUILD_DIR)/test
+# Source files and object files
+SRC = src/main.c src/sensor.c src/processing.c src/utils.c
+OBJ = $(SRC:.c=.o)
+TARGET = sensor_program
 
-# Set include directories for the project and GoogleTest
-INCLUDES = -I$(INCLUDE_DIR) -I$(GTEST_DIR)/googletest/include -I$(GTEST_DIR)/googlemock/include
+# Default target
+all: $(TARGET)
 
-# Create build directory if it doesn't exist
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+# Build the program
+$(TARGET): $(OBJ)
+	$(CC) -o $@ $^
 
-# Build the executable
-$(TARGET): $(OBJ_FILES)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ_FILES)
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Build the test executable
-$(TEST_TARGET): $(TEST_OBJ_FILES) $(GTEST_LIB)
-	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(TEST_OBJ_FILES) $(GTEST_LIB) -pthread
-
-# Compile source files
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-# Compile test files
-$(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
-
-# Run cppcheck for static analysis
+# Run cppcheck for static code analysis
 cppcheck:
-	$(CPP_CHECK) --enable=all --inconclusive --std=c99 $(SRC_DIR) $(TEST_DIR)
+	cppcheck --enable=all --inconclusive --std=c99 $(SRC)
 
-# Run tests
-test: $(TEST_TARGET)
-	$(TEST_TARGET)
-
-# Clean build files
+# Clean up build files
 clean:
-	rm -rf $(BUILD_DIR)/*
-
-# Phony targets
-.PHONY: clean cppcheck test
+	rm -f $(OBJ) $(TARGET)
