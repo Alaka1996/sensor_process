@@ -1,4 +1,4 @@
-name: C Program CI
+name: C/C++ CI/CD Pipeline
 
 on:
   push:
@@ -9,53 +9,41 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
+    
     steps:
-    # Step 1: Checkout code
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    # Step 2: Install dependencies
-    - name: Install GCC, Make, and CMake
-      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
-
-    # Step 3: Install cppcheck
-    - name: Install cppcheck
-      run: sudo apt-get install -y cppcheck
-
-    # Step 4: Run cppcheck and save results
-    - name: Static Code Analysis with cppcheck
-      run: cppcheck --enable=all --inconclusive --std=c99 src/ --xml 2> cppcheck-results.xml
-
-    # Step 5: Upload cppcheck results as an artifact
-    - name: Upload cppcheck results
-      uses: actions/upload-artifact@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set up GCC
+      uses: gcc-actions/setup-gcc@v1
       with:
-        name: cppcheck-results
-        path: cppcheck-results.xml
-
-    # Step 6: Install Google Test
-    - name: Install Google Test
+        version: '13'
+    
+    - name: Set up CMake
+      uses: actions/setup-cmake@v3
+      with:
+        cmake-version: '3.24'
+    
+    - name: Install cppcheck
       run: |
-        sudo apt-get install -y libgtest-dev
-        cd /usr/src/gtest && sudo cmake CMakeLists.txt
-        sudo make
-        sudo cp *.a /usr/lib
-
-    # Step 7: Build the program
-    - name: Build program
-      run: make
-
-    # Step 8: Build and run tests with Google Test
-    - name: Build and Run Google Test
+        sudo apt update
+        sudo apt install -y cppcheck
+    
+    - name: Install dependencies
       run: |
-        cd tests
-        cmake .
+        sudo apt update
+        sudo apt install -y googletest libgtest-dev cmake make g++ gcc
+    
+    - name: Build project
+      run: |
         make
-        ./test_program  # Replace with your actual test executable name
 
-    # Step 9: Clean build
-    - name: Clean build
-      run: make clean
+    - name: Run cppcheck
+      run: |
+        make cppcheck
+    
+    - name: Run tests with Google Test
+      run: |
+        ./my_program
