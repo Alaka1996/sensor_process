@@ -1,56 +1,70 @@
-# Compiler and flags
+# Compiler and Flags
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -g -std=c99
-CXXFLAGS = -Wall -g -std=c++11
-LDFLAGS = -pthread
+CFLAGS = -Wall -Wextra -g -std=c99
+CXXFLAGS = -Wall -Wextra -g -std=c++11
 
 # Directories
 SRC_DIR = src
 BUILD_DIR = build
-GTEST_DIR = external/googletest
-GTEST_LIB_DIR = $(GTEST_DIR)/lib
-GTEST_INCLUDE_DIR = $(GTEST_DIR)/googletest/include
+EXTERNAL_DIR = external
+GTEST_DIR = $(EXTERNAL_DIR)/googletest
+INCLUDE_DIRS = -I$(SRC_DIR) -I$(GTEST_DIR)/googletest/include -I$(GTEST_DIR)/googlemock/include
 
-# Source files
-SRC_FILES = $(wildcard $(SRC_DIR)/*.c)
+# Files
+SRC_FILES = $(SRC_DIR)/*.c
 OBJ_FILES = $(SRC_FILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-EXEC = $(BUILD_DIR)/main
-TEST_EXEC = $(BUILD_DIR)/test_main
+TEST_SRC = test/test_main.cpp
+TEST_OBJ = $(BUILD_DIR)/test_main.o
+
+# Google Test
+GTEST_LIB = $(GTEST_DIR)/build/lib/libgtest.a
+GTEST_MAIN_LIB = $(GTEST_DIR)/build/lib/libgtest_main.a
 
 # Targets
-.PHONY: all clean build tests cppcheck run_tests gtest
+TARGET = $(BUILD_DIR)/main
+TEST_TARGET = $(BUILD_DIR)/test
 
-all: $(EXEC) tests
+# Phony targets
+.PHONY: all clean tests cppcheck
 
-# Build main executable
-$(EXEC): $(OBJ_FILES)
-	$(CC) $(OBJ_FILES) -o $(EXEC) $(LDFLAGS)
+# All build (default target)
+all: $(TARGET)
 
-# Build Google Test from submodule
-gtest:
-	cd $(GTEST_DIR) && cmake . && make
+# Main program build
+$(TARGET): $(OBJ_FILES)
+	$(CC) $(OBJ_FILES) -o $@
 
-# Run the tests
-tests: gtest $(TEST_EXEC)
-	$(TEST_EXEC)
+# Test program build
+$(TEST_TARGET): $(OBJ_FILES) $(TEST_OBJ) $(GTEST_LIB) $(GTEST_MAIN_LIB)
+	$(CXX) $(OBJ_FILES) $(TEST_OBJ) $(GTEST_LIB) $(GTEST_MAIN_LIB) -o $@
 
-# Build the tests
-$(TEST_EXEC): $(OBJ_FILES) $(BUILD_DIR)/test_main.o
-	$(CXX) $(OBJ_FILES) $(BUILD_DIR)/test_main.o -o $(TEST_EXEC) -lgtest -lgtest_main $(LDFLAGS)
-
-# Compile test main
-$(BUILD_DIR)/test_main.o: test/test_main.cpp
-	$(CXX) $(CXXFLAGS) -I$(GTEST_INCLUDE_DIR) -c $< -o $@
-
-# Compile source files
+# Compile object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-# Run cppcheck static analysis
+$(BUILD_DIR)/test_main.o: $(TEST_SRC)
+	@mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) -c $< -o $@
+
+# Google Test setup
+$(GTEST_LIB):
+	cd $(GTEST_DIR) && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_GTEST=ON -DBUILD_GMOCK=OFF .
+	cd $(GTEST_DIR) && make
+
+$(GTEST_MAIN_LIB):
+	cd $(GTEST_DIR) && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_GTEST=ON -DBUILD_GMOCK=OFF .
+	cd $(GTEST_DIR) && make
+
+# Run tests
+tests: $(TEST_TARGET)
+	$(TEST_TARGET)
+
+# Static analysis with cppcheck
 cppcheck:
-	cppcheck --enable=all --inconclusive --std=c99 --force $(SRC_DIR)
+	cppcheck --enable=all --inconclusive --std=c99 $(SRC_DIR) 
 
-# Clean the build
+# Clean build artifacts
 clean:
-	rm -rf $(BUILD_DIR) $(EXEC) $(TEST_EXEC)
+	rm -rf $(BUILD_DIR) $(GTEST_DIR)/build
