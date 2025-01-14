@@ -1,4 +1,4 @@
-name: CCI/CD Pipeline with Cppcheck and Google Test
+name: C CI/CD Pipeline
 
 on:
   push:
@@ -13,31 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true  # Initialize and update submodules
 
-    # Initialize and update the Google Test submodule
-    - name: Initialize and update submodules
-      run: |
-        git submodule update --init --recursive
+      - name: Set up CMake
+        uses: actions/setup-cmake@v2
 
-    # Install dependencies: Cppcheck, build-essential, cmake, googletest
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake cppcheck libgtest-dev
+      - name: Set up GCC
+        uses: gcc-actions/setup-gcc@v2
+        with:
+          version: '13.3.0'
 
-    # Build the project using the Makefile
-    - name: Build project
-      run: |
-        make
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake cppcheck googletest libgtest-dev
 
-    # Run Cppcheck for static analysis
-    - name: Run Cppcheck
-      run: |
-        make cppcheck
+      - name: Install GoogleTest submodule
+        run: |
+          git submodule update --init --recursive  # Ensure submodules are initialized
 
-    # Run tests with Google Test
-    - name: Run Tests
-      run: |
-        make run_tests
+      - name: Run cppcheck
+        run: |
+          make cppcheck  # Run cppcheck for static analysis
+
+      - name: Build and test with Makefile
+        run: |
+          make all        # Build the project
+          make tests      # Run tests
+
+      - name: Upload Test Results
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: $(BUILD_DIR)/test-output
