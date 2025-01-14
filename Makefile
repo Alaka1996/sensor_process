@@ -10,7 +10,6 @@ BIN_DIR = bin
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 MAIN_OBJ = $(OBJ_DIR)/main.o
-PROCESSING_OBJ = $(OBJ_DIR)/processing.o
 UTILS_OBJ = $(OBJ_DIR)/utils.o
 SENSOR_OBJ = $(OBJ_DIR)/sensor.o
 TEST_OBJ = $(OBJ_DIR)/test_sensor.o
