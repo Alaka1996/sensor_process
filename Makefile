@@ -2,12 +2,10 @@
 CC = gcc
 CXX = g++
 CFLAGS = -Wall -Wextra -g -std=c99
-CXXFLAGS = -I/Users/alakanandabg/googletest/include -std=c++11 -pthread
+CXXFLAGS = -I/opt/homebrew/Cellar/googletest/1.15.2/include -std=c++11 -pthread
 
 # Paths for Google Test
-GTEST_DIR = /usr/local
 GTEST_LIB = /opt/homebrew/Cellar/googletest/1.15.2/lib
-GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
 GTEST_INCLUDE = /opt/homebrew/Cellar/googletest/1.15.2/include
 
 # Source and object files
@@ -22,10 +20,11 @@ BUILD_DIR = build
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	$(CXX) $(OBJ) -o $(EXE) $(GTEST_LIB) $(GTEST_MAIN_LIB) -lpthread
+	$(CXX) $(OBJ) -o $(EXE) -L$(GTEST_LIB) -lgtest -lgtest_main -lpthread
 
-$(OBJ): $(SRC)
-	$(CC) $(CFLAGS) -I$(GTEST_INCLUDE) -c $(SRC) -o $(BUILD_DIR)/$@
+$(BUILD_DIR)/%.o: src/%.c
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(GTEST_INCLUDE) -c $< -o $@
 
 # Running cppcheck for static analysis
 cppcheck:
