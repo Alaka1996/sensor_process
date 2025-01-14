@@ -1,44 +1,50 @@
-# Compiler and flags
-CC = gcc
+# Compiler and Flags
 CXX = g++
-CFLAGS = -Iinclude -Wall -Wextra -std=c99
-CXXFLAGS = -Iinclude -std=c++11 -Wall
+CXXFLAGS = -Wall -std=c++17 -I$(PWD)/external/googletest/googletest/include
+LDFLAGS = -lgtest -lgtest_main -pthread
 
-# Source files and object files
-SRC = src/main.c src/sensor.c src/processing.c src/utils.c
-OBJ = $(SRC:.c=.o)
-TARGET = sensor_program
+# Directories
+BUILD_DIR = build
+GTEST_DIR = external/googletest
+GTEST_BUILD_DIR = $(GTEST_DIR)/build
 
-# Test files
+# Source and Object Files
+SRC = src/main.cpp src/sensor.cpp
+OBJ = $(SRC:.cpp=.o)
+
+# Test Files and Targets
 TEST_SRC = test/sensor_test.cpp
 TEST_OBJ = $(TEST_SRC:.cpp=.o)
 TEST_TARGET = test_program
 
-# Default target
-all: $(TARGET)
+# Targets
+all: $(OBJ)
+	$(CXX) -o main $(OBJ)
 
-# Build the program
-$(TARGET): $(OBJ)
-	$(CC) -o $@ $^
+# Build Google Test from submodule (if not already built)
+$(GTEST_BUILD_DIR)/lib/libgtest.a:
+	mkdir -p $(GTEST_BUILD_DIR)
+	cd $(GTEST_DIR) && cmake . && make
 
-# Compile source files
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compile test files
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Run cppcheck for static analysis
-cppcheck:
-	cppcheck --enable=all --inconclusive --std=c99 $(SRC)
-
-# Build and run tests with Google Test
-test: $(OBJ) $(TEST_OBJ)
-	$(CXX) -o $(TEST_TARGET) $^ -lgtest -lgtest_main -pthread
+# Build and link test program with Google Test
+test: $(OBJ) $(TEST_OBJ) $(GTEST_BUILD_DIR)/lib/libgtest.a
+	$(CXX) -o $(TEST_TARGET) $(TEST_OBJ) $(OBJ) $(LDFLAGS)
 	./$(TEST_TARGET)
 
-# Clean up build files
-clean:
-	rm -f $(OBJ) $(TARGET) $(TEST_OBJ) $(TEST_TARGET)
+# Run static analysis using Cppcheck
+cppcheck: 
+	@echo "Running Cppcheck..."
+	@cppcheck --enable=all --inconclusive --quiet src/ test/ $(GTEST_DIR) 
 
+# Compilation rules
+%.o: %.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+# Clean
+clean:
+	rm -f $(OBJ) $(TEST_OBJ) $(TEST_TARGET) main
+	rm -rf $(GTEST_BUILD_DIR)
+
+# Run tests (optional)
+run_tests: test
+	./$(TEST_TARGET)
