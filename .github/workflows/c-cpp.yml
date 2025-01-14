@@ -1,4 +1,4 @@
-name: C Program CI
+name: C Program CI/CD Pipeline
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-test-analyze:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,28 +21,34 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libgtest-dev
+        sudo apt-get install -y build-essential cmake libgtest-dev cppcheck
         cd /usr/src/gtest
         sudo cmake .
         sudo make
         sudo cp *.a /usr/lib
 
-    # Step 3: Run cppcheck
-    - name: Static Code Analysis with cppcheck
-      run: cppcheck --enable=all --inconclusive --std=c99 src/
+    # Step 3: Run Cppcheck (Static Analysis)
+    - name: Static Code Analysis with Cppcheck
+      run: |
+        cppcheck --enable=all --inconclusive --std=c99 src/ --xml 2> cppcheck-results.xml
+    - name: Upload Cppcheck Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: cppcheck-results
+        path: cppcheck-results.xml
 
-    # Step 4: Build program
-    - name: Build program
+    # Step 4: Build the program
+    - name: Build the program
       run: make
 
-    # Step 5: Run program
-    - name: Run program
+    # Step 5: Run the program
+    - name: Run the program
       run: ./sensor_program
 
-    # Step 6: Build and run tests
-    - name: Build and run tests
+    # Step 6: Build and Run Google Tests
+    - name: Build and Run Tests
       run: make test
 
-    # Step 7: Clean build
-    - name: Clean build
+    # Step 7: Clean up build artifacts
+    - name: Clean build artifacts
       run: make clean
