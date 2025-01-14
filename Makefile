@@ -34,7 +34,7 @@ $(BIN_DIR)/test_sensor: $(TEST_OBJ) $(SENSOR_OBJ) $(UTILS_OBJ)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 # Compile main source file
-$(OBJ_DIR)/main.o: main.c
+$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile test file
@@ -42,11 +42,11 @@ $(OBJ_DIR)/test_sensor.o: tests/test_sensor.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile sensor source file
-$(OBJ_DIR)/sensor.o: src/sensor.c
+$(OBJ_DIR)/sensor.o: $(SRC_DIR)/sensor.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile utils source file
-$(OBJ_DIR)/utils.o: src/utils.c
+$(OBJ_DIR)/utils.o: $(SRC_DIR)/utils.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean build artifacts
@@ -55,19 +55,10 @@ clean:
 
 # Run Cppcheck
 lint:
-	cppcheck --force --enable=all --inconclusive --std=c++17 -Iinclude -I/usr/include --suppress=missingIncludeSystem --suppress=syntaxError src/*
+	cppcheck --force --enable=all --inconclusive --std=c++17 -Iinclude -I/usr/include --suppress=missingIncludeSystem --suppress=syntaxError $(SRC_DIR)/*
 
 # Run the tests (Google Test)
 test: $(BIN_DIR)/test_sensor
 	$(BIN_DIR)/test_sensor
-
-# Debug target
-debug:
-	@echo "SRC: $(SRC)"
-	@echo "OBJ: $(OBJ)"
-	@echo "MAIN_OBJ: $(MAIN_OBJ)"
-	@echo "UTILS_OBJ: $(UTILS_OBJ)"
-	@echo "SENSOR_OBJ: $(SENSOR_OBJ)"
-	@echo "TEST_OBJ: $(TEST_OBJ)"
 
 .PHONY: all dirs clean lint debug test
