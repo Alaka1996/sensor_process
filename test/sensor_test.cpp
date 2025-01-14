@@ -1,11 +1,10 @@
-#include <gtest/gtest.h>
-#include "sensor.h"  // Include your C headers
-
 extern "C" { 
     // Include your C function declarations here
-    void read_sensor_data(uint16_t *data);
-    int calculate_average(uint16_t *data, int size);
+    #include "sensor.h"  // Include your C headers
+    #include "processing.h"
 }
+
+#include <gtest/gtest.h>
 
 // Test case for calculate_average
 TEST(SensorTest, CalculateAverage) {
