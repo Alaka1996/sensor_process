@@ -1,4 +1,4 @@
-name: C Program CI/CD Pipeline
+name: C/C++ CI/CD Pipeline
 
 on:
   push:
@@ -9,46 +9,41 @@ on:
       - main
 
 jobs:
-  build-test-analyze:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout code
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        submodules: true  # Ensure submodules are cloned
 
-    # Step 2: Install dependencies
-    - name: Install dependencies
+    - name: Set up build environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake libgtest-dev cppcheck
-        cd /usr/src/gtest
-        sudo cmake .
-        sudo make
-        sudo cp *.a /usr/lib
+        sudo apt-get install -y cmake g++ make cppcheck  # Install required tools including Cppcheck
 
-    # Step 3: Run Cppcheck (Static Analysis)
-    - name: Static Code Analysis with Cppcheck
+    - name: Build Google Test from submodule
       run: |
-        cppcheck --enable=all --inconclusive --std=c99 src/ --xml 2> cppcheck-results.xml
-    - name: Upload Cppcheck Results
-      uses: actions/upload-artifact@v3
-      with:
-        name: cppcheck-results
-        path: cppcheck-results.xml
+        cd external/googletest
+        cmake .
+        make
 
-    # Step 4: Build the program
-    - name: Build the program
-      run: make
+    - name: Run static code analysis with Cppcheck
+      run: |
+        make cppcheck  # Run Cppcheck as part of the pipeline
 
-    # Step 5: Run the program
-    - name: Run the program
-      run: ./sensor_program
+    - name: Build and run tests
+      run: |
+        make all  # Build the main program
+        make run_tests  # Run the tests using Google Test
 
-    # Step 6: Build and Run Google Tests
-    - name: Build and Run Tests
-      run: make test
+    - name: Upload test results (optional)
+      if: always()
+      run: |
+        # Optionally, upload results or logs for further analysis
+        echo "Test results uploaded."
 
-    # Step 7: Clean up build artifacts
-    - name: Clean build artifacts
-      run: make clean
+    - name: Clean up
+      run: |
+        make clean  # Clean up build artifacts
