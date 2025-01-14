@@ -1,49 +1,64 @@
-name: CI/CD Pipeline
+name: Build, Test, and Static Analysis
 
 on:
   push:
     branches:
       - main
   pull_request:
-    branches:
-      - main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
-      - name: Checkout source
-        uses: actions/checkout@v3
+    # Step 1: Checkout the code
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      # Setup GCC
-      - name: Install GCC
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc g++ make
+    # Step 2: Install Build Essentials
+    - name: Install GCC and Make
+      run: sudo apt-get update && sudo apt-get install -y build-essential
 
-      # Install GoogleTest
-      - name: Install GoogleTest
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtest-dev
-          cd /usr/src/gtest
-          sudo cmake .
-          sudo make
-          sudo cp *.a /usr/local/lib
+    # Step 3: Install Cppcheck
+    - name: Install Cppcheck
+      run: sudo apt-get install -y cppcheck
 
-      # Run Make to build the project
-      - name: Build with Makefile
-        run: |
-          make
+    # Step 4: Install Google Test (If you're not using the submodule method)
+    - name: Install Google Test
+      run: |
+        sudo apt-get install -y cmake g++ wget
+        git clone https://github.com/google/googletest.git external/googletest
+        cd external/googletest
+        cmake .
+        sudo make install
 
-      # Run tests (adjust if you have a specific testing framework)
-      - name: Run tests
-        run: |
-          ./my_program --gtest_output=xml:test_results.xml
+    # Step 5: Run Cppcheck Static Analysis
+    - name: Run Cppcheck Static Analysis
+      run: |
+        make lint
 
-      # Run Cppcheck
-      - name: Run Cppcheck
-        run: |
-          cppcheck --enable=all --inconclusive --error-exitcode=1 src/
+    # Step 6: Build the Project
+    - name: Build the Project
+      run: |
+        make clean
+        make VERBOSE=1
+
+    # Step 7: Run Unit Tests
+    - name: Run Unit Tests
+      run: |
+        make test
+
+    # Step 8: Run the Main Program
+    - name: Run Main Program
+      run: ./bin/sensor_program > test_output.txt
+
+    # Step 9: Display Program Output
+    - name: Display Program Output
+      run: cat test_output.txt
+
+    # Step 10: Check for Warnings
+    - name: Check for Warnings
+      run: |
+        if grep -q "Warning:" test_output.txt; then
+          echo "Warnings found in output!"
+          exit 1
