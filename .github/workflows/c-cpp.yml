@@ -18,8 +18,8 @@ jobs:
       uses: actions/checkout@v3
 
     # Step 2: Install dependencies
-    - name: Install GCC and Make
-      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Install GCC, Make, and CMake
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
 
     # Step 3: Install cppcheck
     - name: Install cppcheck
@@ -36,14 +36,26 @@ jobs:
         name: cppcheck-results
         path: cppcheck-results.xml
 
-    # Step 6: Build the program
+    # Step 6: Install Google Test
+    - name: Install Google Test
+      run: |
+        sudo apt-get install -y libgtest-dev
+        cd /usr/src/gtest && sudo cmake CMakeLists.txt
+        sudo make
+        sudo cp *.a /usr/lib
+
+    # Step 7: Build the program
     - name: Build program
       run: make
 
-    # Step 7: Run the program
-    - name: Run program
-      run: ./sensor_program
+    # Step 8: Build and run tests with Google Test
+    - name: Build and Run Google Test
+      run: |
+        cd tests
+        cmake .
+        make
+        ./test_program  # Replace with your actual test executable name
 
-    # Step 8: Clean build
+    # Step 9: Clean build
     - name: Clean build
       run: make clean
