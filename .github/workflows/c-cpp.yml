@@ -1,4 +1,4 @@
-name: C/C++ CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -9,41 +9,51 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      
-    - name: Set up GCC
-      uses: gcc-actions/setup-gcc@v1
-      with:
-        version: '13'
-    
-    - name: Set up CMake
-      uses: actions/setup-cmake@v3
-      with:
-        cmake-version: '3.24'
-    
-    - name: Install cppcheck
-      run: |
-        sudo apt update
-        sudo apt install -y cppcheck
-    
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y googletest libgtest-dev cmake make g++ gcc
-    
-    - name: Build project
-      run: |
-        make
 
-    - name: Run cppcheck
-      run: |
-        make cppcheck
-    
-    - name: Run tests with Google Test
-      run: |
-        ./my_program
+    steps:
+      # Checkout repository
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      # Setup CMake
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v1
+        with:
+          cmake-version: '3.22.0'
+
+      # Setup GCC
+      - name: Install GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ make
+
+      # Install GoogleTest
+      - name: Install GoogleTest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtest-dev
+          cd /usr/src/gtest
+          sudo cmake .
+          sudo make
+          sudo cp *.a /usr/local/lib
+
+      # Run CMake
+      - name: Build with CMake
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          make
+
+      # Run tests
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      # Run Cppcheck
+      - name: Run Cppcheck
+        run: |
+          cppcheck --enable=all --inconclusive --error-exitcode=1 src/
