@@ -47,13 +47,17 @@ jobs:
       run: |
         make test  # Build the tests
 
+    - name: List bin directory contents
+      run: |
+        ls -l bin/  # Verify if the tests executable exists
+
     - name: Run tests
       run: |
-        ./bin/test  # Run the tests
+        ./bin/tests  # Run the tests
 
     - name: Upload artifacts
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
       with:
         name: logs
-        path: bin/test
+        path: bin/tests
