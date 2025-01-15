@@ -23,11 +23,11 @@ jobs:
 
     - name: Run cppcheck
       run: |
-        make cppcheck  # Run cppcheck for static analysis
+        make cppcheck
 
     - name: Build application
       run: |
-        make all  # Build the application
+        make all
 
     - name: Install GoogleTest
       run: |
@@ -49,11 +49,11 @@ jobs:
 
     - name: Run tests
       run: |
-        ./bin/tests  # Run the tests
+        ./bin/test  # Run the tests
 
     - name: Upload artifacts
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
       with:
         name: logs
-        path: bin/tests
+        path: bin/test
