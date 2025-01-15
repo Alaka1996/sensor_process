@@ -1,59 +1,51 @@
-name: CI
+# Variables
+CC = gcc
+CXX = g++
+CFLAGS = -Wall -Wextra -Iinclude -std=c11
+CXXFLAGS = -Wall -Wextra -Iinclude -std=c++17
+LDFLAGS = -lpthread
+SRCDIR = src
+INCLUDEDIR = include
+TESTDIR = tests
+OBJDIR = build
+BINDIR = bin
+CPPCHECK_FLAGS = --enable=all --inconclusive --std=c11 --language=c --template=gcc
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+SRC = $(wildcard $(SRCDIR)/*.c)
+OBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
+TEST_SRC = $(wildcard $(TESTDIR)/*.cpp)
+TEST_OBJ = $(patsubst $(TESTDIR)/%.cpp,$(OBJDIR)/%.o,$(TEST_SRC))
+EXEC = $(BINDIR)/app
+TEST_EXEC = $(BINDIR)/tests
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# Targets
+all: $(EXEC)
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+$(EXEC): $(OBJ)
+	@mkdir -p $(BINDIR)
+	$(CC) $(CFLAGS) $^ -o $@
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y cppcheck cmake g++ gcc git
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-    - name: Run cppcheck
-      run: |
-        make cppcheck  # Run cppcheck for static analysis
+test: $(TEST_EXEC)
+	./$(TEST_EXEC)
 
-    - name: Build application
-      run: |
-        make all  # Build the application
+$(TEST_EXEC): $(OBJ) $(TEST_OBJ)
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-    - name: Install GoogleTest
-      run: |
-        # Remove existing googletest directory if it exists
-        rm -rf googletest
-        
-        # Clone GoogleTest
-        git clone --branch release-1.11.0 https://github.com/google/googletest.git googletest
-        cd googletest
-        mkdir build
-        cd build
-        cmake ..
-        make
-        sudo make install
+$(OBJDIR)/%.o: $(TESTDIR)/%.cpp
+	@mkdir -p $(OBJDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-    - name: Build tests
-      run: |
-        make test  # Build the tests
+cppcheck:
+	cppcheck $(CPPCHECK_FLAGS) $(SRCDIR) $(INCLUDEDIR)
 
-    - name: Run tests
-      run: |
-        ./bin/tests  # Run the tests
+lint: cppcheck  # Lint target to run cppcheck
 
-    - name: Upload artifacts
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: logs
-        path: bin/tests
+clean:
+	rm -rf $(OBJDIR) $(BINDIR)
+
+.PHONY: all test cppcheck lint clean
