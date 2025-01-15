@@ -16,7 +16,7 @@ OBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
 TEST_SRC = $(wildcard $(TESTDIR)/*.cpp)
 TEST_OBJ = $(patsubst $(TESTDIR)/%.cpp,$(OBJDIR)/%.o,$(TEST_SRC))
 EXEC = $(BINDIR)/app
-TEST_EXEC = $(BINDIR)/tests
+TEST_EXEC = $(BINDIR)/test
 
 # Targets
 all: $(EXEC)
@@ -30,11 +30,11 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test: $(TEST_EXEC)
-	./$(TEST_EXEC)
+	./$(TEST_EXEC)  # This runs the tests
 
 $(TEST_EXEC): $(OBJ) $(TEST_OBJ)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) -lgtest -lgtest_main
 
 $(OBJDIR)/%.o: $(TESTDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
