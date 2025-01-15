@@ -53,7 +53,14 @@ jobs:
 
     - name: Run tests
       run: |
-        ./bin/tests  # Explicitly run the tests executable
+        ./bin/tests  # Run the tests
+
+    - name: Upload test results as artifact
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: tests/test_results.xml  # Upload the test results
 
     - name: Upload artifacts
       if: ${{ failure() }}
