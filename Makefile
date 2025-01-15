@@ -6,7 +6,7 @@ CXXFLAGS = -Wall -Wextra -Iinclude -std=c++17
 LDFLAGS = -lpthread
 SRCDIR = src
 INCLUDEDIR = include
-TESTDIR = tests
+TESTDIR = test  # Directory for the test files
 OBJDIR = build
 BINDIR = bin
 CPPCHECK_FLAGS = --enable=all --inconclusive --std=c11 --language=c --template=gcc
@@ -16,7 +16,7 @@ OBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
 TEST_SRC = $(wildcard $(TESTDIR)/*.cpp)
 TEST_OBJ = $(patsubst $(TESTDIR)/%.cpp,$(OBJDIR)/%.o,$(TEST_SRC))
 EXEC = $(BINDIR)/app
-TEST_EXEC = $(BINDIR)/test
+TEST_EXEC = $(BINDIR)/tests  # Name of the test executable
 
 # Targets
 all: $(EXEC)
