@@ -45,7 +45,7 @@ jobs:
 
     - name: Build tests
       run: |
-        make test  # Build the tests
+        make test  # Build and run tests
 
     - name: List bin directory contents
       run: |
@@ -60,9 +60,9 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: test-results
-        path: tests/test_results.xml  # Upload the test results
+        path: tests/test_results.xml  # Upload the generated test results XML
 
-    - name: Upload artifacts
+    - name: Upload logs as artifact
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
       with:
