@@ -53,7 +53,7 @@ jobs:
 
     - name: Run tests
       run: |
-        ./bin/tests  # Run the tests
+        ./bin/tests  # Explicitly run the tests executable
 
     - name: Upload artifacts
       if: ${{ failure() }}
