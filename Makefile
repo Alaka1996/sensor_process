@@ -1,64 +1,49 @@
 # Variables
 CC = gcc
 CXX = g++
-CFLAGS = -Wall -Iinclude -Iexternal/googletest/googletest/include -Wno-unused-function
-SRC_DIR = src
-OBJ_DIR = obj
-BIN_DIR = bin
+CFLAGS = -Wall -Wextra -Iinclude -std=c11
+CXXFLAGS = -Wall -Wextra -Iinclude -std=c++17
+LDFLAGS = -lpthread
+SRCDIR = src
+INCLUDEDIR = include
+TESTDIR = tests
+OBJDIR = build
+BINDIR = bin
+CPPCHECK_FLAGS = --enable=all --inconclusive --std=c11 --language=c --template=gcc
 
-# Source files
-SRC = $(wildcard $(SRC_DIR)/*.c)
-OBJ = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
-MAIN_OBJ = $(OBJ_DIR)/main.o
-UTILS_OBJ = $(OBJ_DIR)/utils.o
-SENSOR_OBJ = $(OBJ_DIR)/sensor.o
-TEST_OBJ = $(OBJ_DIR)/test_sensor.o
-
-# Google Test flags
-CXXFLAGS = -Wall -Iinclude -Iexternal/googletest/googletest/include -Wno-unused-function
-LDFLAGS = -Lexternal/googletest/googletest/lib -lgtest -lgtest_main -pthread
+SRC = $(wildcard $(SRCDIR)/*.c)
+OBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRC))
+TEST_SRC = $(wildcard $(TESTDIR)/*.cpp)
+TEST_OBJ = $(patsubst $(TESTDIR)/%.cpp,$(OBJDIR)/%.o,$(TEST_SRC))
+EXEC = $(BINDIR)/app
+TEST_EXEC = $(BINDIR)/tests
 
 # Targets
-all: dirs $(BIN_DIR)/sensor_program $(BIN_DIR)/test_sensor
+all: $(EXEC)
 
-# Create directories
-dirs:
-	mkdir -p $(OBJ_DIR) $(BIN_DIR)
-
-# Build the main program
-$(BIN_DIR)/sensor_program: $(MAIN_OBJ) $(SENSOR_OBJ) $(UTILS_OBJ)
+$(EXEC): $(OBJ)
+	@mkdir -p $(BINDIR)
 	$(CC) $(CFLAGS) $^ -o $@
 
-# Build the test binary
-$(BIN_DIR)/test_sensor: $(TEST_OBJ) $(SENSOR_OBJ) $(UTILS_OBJ)
-	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
-
-# Compile main source file
-$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile test file
-$(OBJ_DIR)/test_sensor.o: tests/test_sensor.cpp
+test: $(TEST_EXEC)
+	./$(TEST_EXEC)
+
+$(TEST_EXEC): $(OBJ) $(TEST_OBJ)
+	@mkdir -p $(BINDIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+$(OBJDIR)/%.o: $(TESTDIR)/%.cpp
+	@mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile sensor source file
-$(OBJ_DIR)/sensor.o: $(SRC_DIR)/sensor.c
-	$(CC) $(CFLAGS) -c $< -o $@
+cppcheck:
+	cppcheck $(CPPCHECK_FLAGS) $(SRCDIR) $(INCLUDEDIR)
 
-# Compile utils source file
-$(OBJ_DIR)/utils.o: $(SRC_DIR)/utils.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Clean build artifacts
 clean:
-	rm -rf $(OBJ_DIR) $(BIN_DIR)
+	rm -rf $(OBJDIR) $(BINDIR)
 
-# Run Cppcheck
-lint:
-	cppcheck --force --enable=all --inconclusive --std=c++17 -Iinclude -I/usr/include --suppress=missingIncludeSystem --suppress=syntaxError $(SRC_DIR)/*
-
-# Run the tests (Google Test)
-test: $(BIN_DIR)/test_sensor
-	$(BIN_DIR)/test_sensor
-
-.PHONY: all dirs clean lint debug test
+.PHONY: all test cppcheck clean
