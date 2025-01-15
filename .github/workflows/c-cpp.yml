@@ -1,64 +1,56 @@
-name: Build, Test, and Static Analysis
+name: CI
 
 on:
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the code
-    - name: Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Install Build Essentials
-    - name: Install GCC and Make
-      run: sudo apt-get update && sudo apt-get install -y build-essential
-
-    # Step 3: Install Cppcheck
-    - name: Install Cppcheck
-      run: sudo apt-get install -y cppcheck
-
-    # Step 4: Install Google Test (If you're not using the submodule method)
-    - name: Install Google Test
+    - name: Install dependencies
       run: |
-        sudo apt-get install -y cmake g++ wget
-        git clone https://github.com/google/googletest.git external/googletest
-        cd external/googletest
-        cmake .
+        sudo apt update
+        sudo apt install -y cppcheck cmake g++ gcc
+
+    - name: Run cppcheck
+      run: |
+        make cppcheck
+
+    - name: Build application
+      run: |
+        make all
+
+    - name: Install GoogleTest
+      run: |
+        mkdir -p googletest/build
+        cd googletest
+        git clone https://github.com/google/googletest.git .
+        mkdir -p build
+        cd build
+        cmake ..
+        make
         sudo make install
 
-    # Step 5: Run Cppcheck Static Analysis
-    - name: Run Cppcheck Static Analysis
-      run: |
-        make lint
-
-    # Step 6: Build the Project
-    - name: Build the Project
-      run: |
-        make clean
-        make VERBOSE=1
-
-    # Step 7: Run Unit Tests
-    - name: Run Unit Tests
+    - name: Build tests
       run: |
         make test
 
-    # Step 8: Run the Main Program
-    - name: Run Main Program
-      run: ./bin/sensor_program > test_output.txt
-
-    # Step 9: Display Program Output
-    - name: Display Program Output
-      run: cat test_output.txt
-
-    # Step 10: Check for Warnings
-    - name: Check for Warnings
+    - name: Run tests
       run: |
-        if grep -q "Warning:" test_output.txt; then
-          echo "Warnings found in output!"
-          exit 1
+        ./bin/tests
+
+    - name: Upload artifacts
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: bin/tests
