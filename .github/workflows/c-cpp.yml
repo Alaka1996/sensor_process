@@ -19,22 +19,25 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y cppcheck cmake g++ gcc
+        sudo apt install -y cppcheck cmake g++ gcc git
 
     - name: Run cppcheck
       run: |
-        make cppcheck
+        make cppcheck  # Run cppcheck for static analysis
 
     - name: Build application
       run: |
-        make all
+        make all  # Build the application
 
     - name: Install GoogleTest
       run: |
-        mkdir -p googletest/build
+        # Remove existing googletest directory if it exists
+        rm -rf googletest
+        
+        # Clone GoogleTest
+        git clone --branch release-1.11.0 https://github.com/google/googletest.git googletest
         cd googletest
-        git clone https://github.com/google/googletest.git .
-        mkdir -p build
+        mkdir build
         cd build
         cmake ..
         make
@@ -42,11 +45,11 @@ jobs:
 
     - name: Build tests
       run: |
-        make test
+        make test  # Build the tests
 
     - name: Run tests
       run: |
-        ./bin/tests
+        ./bin/tests  # Run the tests
 
     - name: Upload artifacts
       if: ${{ failure() }}
